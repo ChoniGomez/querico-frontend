@@ -10,6 +10,7 @@ import CatalogProductList from '../components/public/CatalogProductList.jsx';
 import PromotionList from '../components/public/PromotionList.jsx';
 import ProductModal from '../components/ProductModal.jsx';
 import { generarEnlaceWhatsApp } from '../utils/whatsapp.js';
+import { apiRequest } from '../utils/api.js';
 
 function CatalogPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -35,10 +36,29 @@ function CatalogPage() {
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  const sendOrder = (customer) => {
+  const sendOrder = async (customer) => {
     if (!isOpen) return;
     const url = generarEnlaceWhatsApp(cart, { ...customer, name: customer.name || user?.name });
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    if (!url) return;
+    const whatsappWindow = window.open('', '_blank');
+    try {
+      await apiRequest('/api/orders', {
+        method: 'POST',
+        token: user?.token,
+        body: JSON.stringify({
+          customerName: customer.name || user?.name,
+          deliveryType: customer.deliveryType,
+          address: customer.address,
+          paymentMethod: customer.paymentMethod,
+          cashAmount: customer.cashAmount,
+          items: cart.map(({ name, quantity, price, notes }) => ({ name, quantity, price, notes })),
+        }),
+      });
+      if (whatsappWindow) whatsappWindow.location.href = url;
+    } catch (error) {
+      whatsappWindow?.close();
+      throw error;
+    }
   };
 
   return (
@@ -52,8 +72,8 @@ function CatalogPage() {
             <h1 id="menu-title" className="font-display text-4xl font-extrabold leading-[1.04] sm:text-5xl">HOY SE COME <span className="text-brand-red">RICO.</span></h1>
             <p className="mt-4 max-w-md text-sm leading-6 text-gray-600">Tus favoritos, recién hechos y directo a tu mesa. Elegí algo rico para compartir.</p>
           </div>
-          <div className="relative min-h-48 bg-brand-green sm:min-h-64">
-            <img className="absolute inset-0 h-full w-full object-cover mix-blend-multiply opacity-75" src="https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=1200&q=85" alt="Pizza recién horneada" />
+          <div className="relative min-h-48 sm:min-h-64">
+            <img className="absolute inset-0 h-full w-full object-cover" src="https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=1200&q=85" alt="Pizza recién horneada" />
             <span className="absolute bottom-4 right-4 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-brand-green-dark shadow-sm">HECHO CON GANAS</span>
           </div>
         </section>

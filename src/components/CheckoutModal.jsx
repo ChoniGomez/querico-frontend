@@ -9,6 +9,7 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
   const [address, setAddress] = useState('');
   const [cashAmount, setCashAmount] = useState('');
   const [formError, setFormError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const closeOnEscape = (event) => event.key === 'Escape' && onClose();
@@ -25,7 +26,7 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
     setFormError('');
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (deliveryType === 'delivery' && !address.trim()) {
       setFormError('Ingresá la dirección para el delivery.');
@@ -40,7 +41,15 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
       setFormError('Ingresá tu nombre para identificar el pedido.');
       return;
     }
-    onSubmit({ name: customerName.trim(), deliveryType, address: address.trim(), paymentMethod, cashAmount });
+    setSubmitting(true);
+    try {
+      await onSubmit({ name: customerName.trim(), deliveryType, address: address.trim(), paymentMethod, cashAmount });
+      onClose();
+    } catch (error) {
+      setFormError(error.message || 'No se pudo guardar el pedido. Intentá nuevamente.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -117,8 +126,8 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
           </div>
           {!isOpen && <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-brand-red" role="status">El local está cerrado. Podés revisar el pedido, pero no enviarlo por ahora.</p>}
           {formError && <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-brand-red" role="alert">{formError}</p>}
-          <button className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-green-dark px-4 text-center text-sm font-extrabold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50" type="submit" disabled={cart.length === 0 || !isOpen}>
-            <span aria-hidden="true">◔</span> CONFIRMAR Y ENVIAR A WHATSAPP
+          <button className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-green-dark px-4 text-center text-sm font-extrabold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50" type="submit" disabled={cart.length === 0 || !isOpen || submitting}>
+            <span aria-hidden="true">◔</span> {submitting ? 'GUARDANDO PEDIDO...' : 'CONFIRMAR Y ENVIAR A WHATSAPP'}
           </button>
           <p className="mt-2 text-center text-[11px] text-gray-500">Al confirmar, se abrirá WhatsApp con el detalle listo para enviar.</p>
         </form>

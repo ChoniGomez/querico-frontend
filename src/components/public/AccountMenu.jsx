@@ -4,14 +4,14 @@ import { ChevronDown, LogOut, ShoppingBag, UserRound } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 function AccountMenu() {
-  const { user, signInWithGoogle, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   if (!user) {
-    return <button type="button" className="rounded-xl bg-white px-3 py-2.5 text-xs font-extrabold text-brand-ink transition hover:bg-gray-100" onClick={async () => { await signInWithGoogle(); }}>
-      Ingresar con Google <span className="ml-1 text-[10px] text-gray-500">(demo)</span>
-    </button>;
+    return <Link to="/ingresar" className="rounded-xl bg-white px-3 py-2.5 text-xs font-extrabold text-brand-ink transition hover:bg-gray-100">
+      Ingresar con Google
+    </Link>;
   }
 
   return (
