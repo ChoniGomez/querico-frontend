@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
       method: 'POST',
       body: JSON.stringify({ credential }),
     });
+    if (!session.user || !session.token) throw new Error('La API no devolvió una sesión válida.');
     return saveUser({ ...session.user, token: session.token });
   };
 
