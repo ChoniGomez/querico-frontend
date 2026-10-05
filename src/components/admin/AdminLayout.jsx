@@ -1,10 +1,11 @@
-import { LayoutDashboard, LogOut, Megaphone, Store, UtensilsCrossed } from 'lucide-react';
+import { LogOut, Megaphone, Store, Tags, UtensilsCrossed } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 const links = [
   { to: '/admin', label: 'Configuración', icon: Store, end: true },
   { to: '/admin/productos', label: 'Productos', icon: UtensilsCrossed },
+  { to: '/admin/categorias', label: 'Categorías', icon: Tags },
   { to: '/admin/promociones', label: 'Promociones', icon: Megaphone },
 ];
 

@@ -1,8 +1,14 @@
-import { useState } from 'react';
-import { categories } from '../data/products.js';
+import { useEffect, useState } from 'react';
+import { categories as defaultCategories } from '../data/products.js';
 
-function CategoryNav() {
-  const [activeCategory, setActiveCategory] = useState(categories[0].id);
+function CategoryNav({ categories = defaultCategories }) {
+  const [activeCategory, setActiveCategory] = useState(categories[0]?.id);
+
+  useEffect(() => {
+    if (!categories.some((category) => category.id === activeCategory)) {
+      setActiveCategory(categories[0]?.id);
+    }
+  }, [activeCategory, categories]);
 
   const navigateTo = (categoryId) => {
     setActiveCategory(categoryId);

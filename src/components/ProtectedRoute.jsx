@@ -5,7 +5,7 @@ function ProtectedRoute({ role }) {
   const { user } = useAuth();
   const location = useLocation();
   if (!user) {
-    return <Navigate to={role === 'administrador' ? '/admin/login' : '/ingresar'} replace state={{ from: location }} />;
+    return <Navigate to="/ingresar" replace state={{ from: location }} />;
   }
   if (user.role !== role) return <Navigate to="/" replace />;
   return <Outlet />;

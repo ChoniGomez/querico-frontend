@@ -1,8 +1,38 @@
+import { useEffect, useState } from 'react';
+import { Clock3 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { useShop } from '../../context/ShopContext.jsx';
+import { formatPrice } from '../../data/products.js';
+import { apiRequest } from '../../utils/api.js';
 
 function AdminOverview() {
   const { isOpen, setIsOpen, schedule, setSchedule } = useShop();
+  const { user } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [ordersError, setOrdersError] = useState('');
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  useEffect(() => {
+    apiRequest('/api/orders/all', { token: user.token })
+      .then(setOrders)
+      .catch((error) => setOrdersError(error.message))
+      .finally(() => setLoadingOrders(false));
+  }, [user.token]);
+
   const updateDay = (index, updates) => setSchedule(schedule.map((item, dayIndex) => dayIndex === index ? { ...item, ...updates } : item));
+
+  const updateOrderStatus = async (orderId, status) => {
+    try {
+      await apiRequest(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        token: user.token,
+        body: JSON.stringify({ status }),
+      });
+      setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order));
+    } catch (error) {
+      setOrdersError(error.message);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -26,6 +56,22 @@ function AdminOverview() {
             <label className="text-[11px] font-semibold text-gray-500">Desde<input className="mt-1 block h-10 w-full rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-900 disabled:bg-gray-100" type="time" value={item.from} disabled={!item.enabled} onChange={(event) => updateDay(index, { from: event.target.value })} /></label>
             <label className="text-[11px] font-semibold text-gray-500">Hasta<input className="mt-1 block h-10 w-full rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-900 disabled:bg-gray-100" type="time" value={item.to} disabled={!item.enabled} onChange={(event) => updateDay(index, { to: event.target.value })} /></label>
           </div>)}
+        </div>
+      </section>
+      <section className="mt-10 border-t border-gray-200 pt-7">
+        <div className="mb-4"><p className="text-xs font-extrabold uppercase tracking-widest text-brand-green-dark">VENTAS</p><h2 className="mt-1 font-display text-xl font-extrabold">Pedidos recientes</h2></div>
+        {loadingOrders && <p className="py-4 text-sm text-gray-500">Cargando pedidos...</p>}
+        {ordersError && <p role="alert" className="py-4 text-sm font-semibold text-brand-red">{ordersError}</p>}
+        {!loadingOrders && !ordersError && orders.length === 0 && <p className="py-4 text-sm text-gray-500">Todavía no hay pedidos registrados.</p>}
+        <div className="divide-y divide-gray-200 border-y border-gray-200">
+          {orders.map((order) => <article className="flex flex-wrap items-center justify-between gap-4 py-4" key={order.id}>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">#{order.id} · {order.customerName}</h3><span className="text-xs text-gray-500">{order.customerEmail || 'Pedido de invitado'}</span></div>
+              <p className="mt-1 text-sm text-gray-600">{order.items.map((item) => `${item.quantity} ${item.name}`).join(', ')}</p>
+              <p className="mt-1 inline-flex items-center gap-1 text-xs text-gray-400"><Clock3 size={12} />{new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(order.createdAt))}</p>
+            </div>
+            <div className="flex items-center gap-3"><strong className="text-sm">{formatPrice(Number(order.total))}</strong><label className="sr-only" htmlFor={`order-status-${order.id}`}>Estado del pedido {order.id}</label><select id={`order-status-${order.id}`} className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-xs font-bold" value={order.status} onChange={(event) => updateOrderStatus(order.id, event.target.value)}><option>Pendiente</option><option>En preparación</option><option>Entregado</option></select></div>
+          </article>)}
         </div>
       </section>
     </div>

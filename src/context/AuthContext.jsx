@@ -1,11 +1,14 @@
 import { createContext, useContext, useState } from 'react';
+import { apiRequest } from '../utils/api.js';
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = 'que-rico-session';
 
 function readSession() {
   try {
-    return JSON.parse(window.localStorage.getItem(STORAGE_KEY)) || null;
+    const session = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+    if (!session?.token || !['customer', 'admin'].includes(session.role)) return null;
+    return session;
   } catch {
     return null;
   }
@@ -20,29 +23,12 @@ export function AuthProvider({ children }) {
     return nextUser;
   };
 
-  // Demo adapter: replace these methods with Firebase Auth or Supabase Auth in production.
-  const signInWithGoogle = async () => saveUser({
-    id: 'google-demo-customer',
-    name: 'Cliente Que Rico!',
-    email: 'cliente@querico.local',
-    photoURL: '',
-    role: 'cliente',
-    provider: 'google-demo',
-  });
-
-  const signInAdmin = async (email, password) => {
-    const expectedEmail = import.meta.env.VITE_ADMIN_EMAIL || 'admin@querico.local';
-    const expectedPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
-    if (email !== expectedEmail || password !== expectedPassword) {
-      throw new Error('El correo o la contraseña no son correctos.');
-    }
-    return saveUser({
-      id: 'demo-admin',
-      name: 'Administración',
-      email,
-      role: 'administrador',
-      provider: 'demo',
+  const signInWithGoogle = async (credential) => {
+    const session = await apiRequest('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
     });
+    return saveUser({ ...session.user, token: session.token });
   };
 
   const signOut = () => {
@@ -51,7 +37,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, signInWithGoogle, signInAdmin, signOut }}>
+    <AuthContext.Provider value={{ user, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );

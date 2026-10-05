@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
-import { categories, formatPrice } from '../../data/products.js';
+import { categories as defaultCategories, formatPrice } from '../../data/products.js';
 
-function CatalogProductList({ products, onAdd }) {
+function CatalogProductList({ products, categories = defaultCategories, onAdd }) {
   const visibleProducts = products.filter((product) => product.visible !== false);
 
   return (
@@ -22,7 +22,7 @@ function CatalogProductList({ products, onAdd }) {
               {categoryProducts.map((product) => (
                 <article className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card transition duration-200 hover:-translate-y-1 hover:shadow-lg" key={product.id}>
                   <div className="relative h-48 overflow-hidden bg-gray-200">
-                    <img className="h-full w-full object-cover transition duration-300 hover:scale-105" src={product.image} alt={product.name} loading="lazy" />
+                    <img className="h-full w-full object-cover transition duration-300 hover:scale-105" src={product.image || 'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=900&q=85'} alt={product.name} loading="lazy" />
                     {product.badge && <span className="absolute left-3 top-3 rounded-full bg-brand-green px-3 py-1 text-[10px] font-extrabold uppercase text-white shadow-sm">{product.badge}</span>}
                   </div>
                   <div className="flex min-h-40 flex-col justify-between p-4">
