@@ -8,11 +8,13 @@ import PromotionsManager from './components/admin/PromotionsManager.jsx';
 import CatalogPage from './pages/CatalogPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import OrderHistoryPage from './pages/OrderHistoryPage.jsx';
+import AccountProfilePage from './pages/AccountProfilePage.jsx';
 
 function App() {
   return <Routes>
     <Route path="/" element={<CatalogPage />} />
     <Route path="/ingresar" element={<LoginPage />} />
+    <Route element={<ProtectedRoute />}><Route path="/mi-cuenta" element={<AccountProfilePage />} /></Route>
     <Route element={<ProtectedRoute role="customer" />}><Route path="/mis-pedidos" element={<OrderHistoryPage />} /></Route>
     <Route element={<ProtectedRoute role="admin" />}>
       <Route path="/admin" element={<AdminLayout />}>

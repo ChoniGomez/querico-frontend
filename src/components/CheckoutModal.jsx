@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { Minus, Plus, Trash2, X } from 'lucide-react';
 import { formatPrice } from '../data/products.js';
 
-function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQuantity, onSubmit }) {
+function CheckoutModal({ cart, subtotal, initialName, user, onUpdateProfile, isOpen, onClose, onChangeQuantity, onSubmit }) {
   const [deliveryType, setDeliveryType] = useState('delivery');
   const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [customerName, setCustomerName] = useState(initialName);
-  const [address, setAddress] = useState('');
+  const [firstName, setFirstName] = useState(user?.firstName || initialName?.split(' ')[0] || '');
+  const [lastName, setLastName] = useState(user?.lastName || initialName?.split(' ').slice(1).join(' ') || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [address, setAddress] = useState(user?.address || '');
   const [cashAmount, setCashAmount] = useState('');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -15,11 +17,15 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
     const closeOnEscape = (event) => event.key === 'Escape' && onClose();
     window.addEventListener('keydown', closeOnEscape);
     document.body.classList.add('overflow-hidden');
+    setFirstName(user?.firstName || initialName?.split(' ')[0] || '');
+    setLastName(user?.lastName || initialName?.split(' ').slice(1).join(' ') || '');
+    setEmail(user?.email || '');
+    setAddress(user?.address || '');
     return () => {
       window.removeEventListener('keydown', closeOnEscape);
       document.body.classList.remove('overflow-hidden');
     };
-  }, [onClose]);
+  }, [initialName, onClose, user]);
 
   const changeQuantity = (lineId, amount) => {
     onChangeQuantity(lineId, amount);
@@ -28,7 +34,7 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (deliveryType === 'delivery' && !address.trim()) {
+    if ((deliveryType === 'delivery' || user) && !address.trim()) {
       setFormError('Ingresá la dirección para el delivery.');
       return;
     }
@@ -37,13 +43,26 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
       return;
     }
     setFormError('');
-    if (!customerName.trim()) {
-      setFormError('Ingresá tu nombre para identificar el pedido.');
+    if (!firstName.trim() || !lastName.trim()) {
+      setFormError('Completá tu nombre y apellido.');
+      return;
+    }
+    if (!email.trim()) {
+      setFormError('Ingresá tu correo electrónico.');
       return;
     }
     setSubmitting(true);
     try {
-      await onSubmit({ name: customerName.trim(), deliveryType, address: address.trim(), paymentMethod, cashAmount });
+      const profile = { firstName: firstName.trim(), lastName: lastName.trim(), address: address.trim() };
+      if (user) await onUpdateProfile(profile);
+      await onSubmit({
+        name: `${profile.firstName} ${profile.lastName}`,
+        email: user?.email || email.trim(),
+        ...profile,
+        deliveryType,
+        paymentMethod,
+        cashAmount,
+      });
       onClose();
     } catch (error) {
       setFormError(error.message || 'No se pudo guardar el pedido. Intentá nuevamente.');
@@ -61,9 +80,15 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
         </header>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-x-6 md:grid-cols-2">
-            <label className="border-t border-gray-100 py-4 text-sm font-bold md:col-span-2" htmlFor="customer-name">
-              Tu nombre
-              <input className="mt-1.5 block h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20" id="customer-name" type="text" autoComplete="name" required value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nombre y apellido" />
+            <label className="border-t border-gray-100 py-4 text-sm font-bold" htmlFor="checkout-first-name">Nombre
+              <input className="mt-1.5 block h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20" id="checkout-first-name" type="text" autoComplete="given-name" required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} />
+            </label>
+            <label className="border-t border-gray-100 py-4 text-sm font-bold" htmlFor="checkout-last-name">Apellido
+              <input className="mt-1.5 block h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20" id="checkout-last-name" type="text" autoComplete="family-name" required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} />
+            </label>
+            <label className="border-t border-gray-100 py-4 text-sm font-bold md:col-span-2" htmlFor="checkout-email">Correo electrónico
+              <input className="mt-1.5 block h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 read-only:text-gray-500" id="checkout-email" type="email" autoComplete="email" required readOnly={Boolean(user)} value={email} onChange={(event) => setEmail(event.target.value)} />
+              {user && <span className="mt-1 block text-xs font-normal text-gray-400">Verificado por Google</span>}
             </label>
             <section className="border-t border-gray-100 py-4 md:col-span-2">
               <div className="mb-2 flex items-center justify-between"><h3 className="font-display font-extrabold">Tu pedido</h3><span className="text-xs text-gray-500">{cart.reduce((count, item) => count + item.quantity, 0)} productos</span></div>
@@ -97,10 +122,10 @@ function CheckoutModal({ cart, subtotal, initialName, isOpen, onClose, onChangeQ
                   <input className="accent-brand-green" type="radio" name="delivery" value="pickup" checked={deliveryType === 'pickup'} onChange={() => setDeliveryType('pickup')} /> Retiro local
                 </label>
               </div>
-              {deliveryType === 'delivery' && (
+              {(deliveryType === 'delivery' || (user && !user.address)) && (
                 <label className="mt-3 block text-sm font-bold" htmlFor="delivery-address">
-                  Dirección completa
-                  <input className="mt-1.5 block h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20" id="delivery-address" type="text" autoComplete="street-address" placeholder="Calle, número, piso y departamento" value={address} onChange={(event) => setAddress(event.target.value)} />
+                  Dirección de entrega
+                  <input className="mt-1.5 block h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20" id="delivery-address" type="text" autoComplete="street-address" required={deliveryType === 'delivery' || (user && !user.address)} placeholder="Calle, número, piso y departamento" value={address} onChange={(event) => setAddress(event.target.value)} />
                 </label>
               )}
             </section>

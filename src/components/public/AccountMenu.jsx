@@ -9,8 +9,8 @@ function AccountMenu() {
   const navigate = useNavigate();
 
   if (!user) {
-    return <Link to="/ingresar" className="rounded-xl bg-white px-3 py-2.5 text-xs font-extrabold text-brand-ink transition hover:bg-gray-100">
-      Ingresar con Google
+    return <Link to="/ingresar" className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 text-xs font-extrabold text-brand-ink transition hover:bg-gray-100">
+      <UserRound size={15} /> Mi Cuenta
     </Link>;
   }
 
@@ -21,6 +21,7 @@ function AccountMenu() {
         <span className="hidden max-w-28 truncate text-xs font-bold sm:block">{user.name}</span><ChevronDown size={15} />
       </button>
       {menuOpen && <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-gray-100 bg-white p-1.5 text-sm text-gray-800 shadow-xl">
+        <Link className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-gray-50" to="/mi-cuenta" onClick={() => setMenuOpen(false)}><UserRound size={16} /> Mi cuenta</Link>
         {user.role === 'customer' && <Link className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-gray-50" to="/mis-pedidos" onClick={() => setMenuOpen(false)}><ShoppingBag size={16} /> Mis pedidos</Link>}
         {user.role === 'admin' && <Link className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-gray-50" to="/admin" onClick={() => setMenuOpen(false)}>Panel administrador</Link>}
         <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left hover:bg-gray-50" type="button" onClick={() => { signOut(); setMenuOpen(false); navigate('/'); }}><LogOut size={16} /> Cerrar sesión</button>

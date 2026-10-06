@@ -22,7 +22,6 @@ function Header() {
           <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold ${isOpen ? 'bg-white text-brand-green-dark' : 'bg-brand-green-dark text-white'}`}>
             <i className={`h-2 w-2 rounded-full ${isOpen ? 'bg-brand-green' : 'bg-red-300'}`} />{isOpen ? 'ABIERTO' : 'CERRADO'}
           </span>
-          <a className="hidden rounded-xl bg-brand-red px-4 py-2.5 text-xs font-extrabold shadow-sm transition hover:bg-brand-red-dark sm:inline-flex" href="#promos">HACÉ TU PEDIDO</a>
           <AccountMenu />
           <button className="rounded-lg p-2 hover:bg-white/15 sm:hidden" type="button" aria-label="Ir al menú" onClick={() => document.getElementById('promos')?.scrollIntoView({ behavior: 'smooth' })}><Menu size={21} /></button>
         </div>

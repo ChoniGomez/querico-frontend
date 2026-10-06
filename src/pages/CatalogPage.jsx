@@ -18,7 +18,7 @@ function CatalogPage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [databaseCategories, setDatabaseCategories] = useState(null);
   const [databaseProducts, setDatabaseProducts] = useState(null);
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { isOpen, products, promotions } = useShop();
 
   useEffect(() => {
@@ -64,6 +64,7 @@ function CatalogPage() {
         token: user?.token,
         body: JSON.stringify({
           customerName: customer.name || user?.name,
+          customerEmail: customer.email,
           deliveryType: customer.deliveryType,
           address: customer.address,
           paymentMethod: customer.paymentMethod,
@@ -102,7 +103,7 @@ function CatalogPage() {
       </main>
       {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onConfirm={addToCart} />}
       {totalItems > 0 && <CartButton itemCount={totalItems} subtotal={subtotal} onClick={() => setCheckoutOpen(true)} />}
-      {checkoutOpen && <CheckoutModal cart={cart} subtotal={subtotal} initialName={user?.name || ''} isOpen={isOpen} onClose={() => setCheckoutOpen(false)} onChangeQuantity={changeQuantity} onSubmit={sendOrder} />}
+      {checkoutOpen && <CheckoutModal cart={cart} subtotal={subtotal} initialName={user?.name || ''} user={user} onUpdateProfile={updateProfile} isOpen={isOpen} onClose={() => setCheckoutOpen(false)} onChangeQuantity={changeQuantity} onSubmit={sendOrder} />}
     </div>
   );
 }

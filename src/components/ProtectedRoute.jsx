@@ -7,7 +7,7 @@ function ProtectedRoute({ role }) {
   if (!user) {
     return <Navigate to="/ingresar" replace state={{ from: location }} />;
   }
-  if (user.role !== role) return <Navigate to="/" replace />;
+  if (role && user.role !== role) return <Navigate to="/" replace />;
   return <Outlet />;
 }
 
