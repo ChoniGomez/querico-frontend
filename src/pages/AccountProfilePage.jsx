@@ -10,17 +10,35 @@ function AccountProfilePage() {
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
   const [address, setAddress] = useState(user.address || '');
+  const [originalProfile, setOriginalProfile] = useState(() => ({
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    address: user.address || '',
+  }));
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const hasChanges = firstName !== originalProfile.firstName
+    || lastName !== originalProfile.lastName
+    || address !== originalProfile.address;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (!hasChanges) return;
     setError('');
     setSaved(false);
     setSaving(true);
     try {
-      await updateProfile({ firstName, lastName, address });
+      const savedProfile = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        address: address.trim(),
+      };
+      await updateProfile(savedProfile);
+      setFirstName(savedProfile.firstName);
+      setLastName(savedProfile.lastName);
+      setAddress(savedProfile.address);
+      setOriginalProfile(savedProfile);
       setSaved(true);
     } catch (requestError) {
       setError(requestError.message || 'No se pudieron guardar tus datos.');
@@ -39,7 +57,7 @@ function AccountProfilePage() {
           <span className="grid h-11 w-11 place-items-center rounded-full bg-white/15"><UserRound size={21} /></span>
           <div><p className="text-xs font-bold uppercase tracking-widest text-white/60">QUE RICO! CLUB</p><h1 className="font-display text-2xl font-extrabold">Mi cuenta</h1></div>
         </div>
-        <p className="mt-3 max-w-lg text-sm leading-6 text-white/75">Guardá tus datos para completar tus pedidos de forma rápida. Solo usamos el domicilio para entregas.</p>
+        <p className="mt-3 max-w-lg text-sm leading-6 text-white/90">Guardá tus datos para completar tus pedidos de forma rápida. Solo usamos el domicilio para entregas.</p>
       </header>
       <form className="space-y-5 px-6 py-7 sm:px-9" onSubmit={handleSubmit}>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -52,7 +70,7 @@ function AccountProfilePage() {
         </div>
         <label className="block text-sm font-bold text-gray-800">Correo electrónico
           <input className="mt-1.5 block h-11 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm font-normal text-gray-500" type="email" autoComplete="email" readOnly value={user.email} />
-          <span className="mt-1 block text-xs font-normal text-gray-400">Verificado por Google</span>
+          <span className="mt-1 block text-xs font-semibold text-gray-700">{user.authProvider === 'google' || (!user.authProvider && user.isVerified) ? 'Verificado por Google' : 'Correo verificado'}</span>
         </label>
         <label className="block text-sm font-bold text-gray-800"><span className="inline-flex items-center gap-1.5"><MapPin size={15} /> Dirección de entrega</span>
           <input className="mt-1.5 block h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-normal outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/15" autoComplete="street-address" required maxLength={500} placeholder="Calle, número, piso y departamento" value={address} onChange={(event) => setAddress(event.target.value)} />
@@ -60,7 +78,7 @@ function AccountProfilePage() {
         {error && <p role="alert" className="text-sm font-semibold text-brand-red">{error}</p>}
         {saved && <p role="status" className="flex items-center gap-2 text-sm font-semibold text-green-700"><Check size={16} /> Datos guardados correctamente.</p>}
         <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-5">
-          <button className="min-h-11 rounded-lg bg-brand-red px-5 text-sm font-extrabold text-white transition hover:bg-brand-red-dark disabled:opacity-50" type="submit" disabled={saving}>{saving ? 'GUARDANDO...' : 'GUARDAR MIS DATOS'}</button>
+          <button className="min-h-11 rounded-lg bg-brand-red px-5 text-sm font-extrabold text-white transition hover:bg-brand-red-dark disabled:cursor-not-allowed disabled:opacity-40" type="submit" disabled={saving || !hasChanges}>{saving ? 'GUARDANDO...' : 'GUARDAR MIS DATOS'}</button>
           {saved && <button className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm font-bold text-gray-700 hover:bg-gray-50" type="button" onClick={() => navigate(continueTo, { replace: true })}>Continuar</button>}
         </div>
       </form>

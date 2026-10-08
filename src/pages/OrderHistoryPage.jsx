@@ -32,7 +32,7 @@ function OrderHistoryPage() {
         {error && <p role="alert" className="py-6 text-sm font-semibold text-brand-red">{error}</p>}
         {!loading && !error && orders.length === 0 && <p className="py-6 text-sm text-gray-500">Todavía no tenés pedidos.</p>}
         {orders.map((order) => <article className="grid gap-3 py-5 sm:grid-cols-[1fr_auto] sm:items-center" key={order.id}>
-          <div><div className="flex flex-wrap items-center gap-3"><h2 className="font-display font-extrabold">Pedido #{order.id}</h2><span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700"><PackageCheck size={14} />{order.status}</span></div><p className="mt-1 text-sm text-gray-600">{order.items.map((item) => `${item.quantity} ${item.name}`).join(', ')}</p><p className="mt-2 inline-flex items-center gap-1 text-xs text-gray-400"><Clock3 size={13} />{formatDate(order.createdAt)}</p></div>
+          <div><div className="flex flex-wrap items-center gap-3"><h2 className="font-display font-extrabold">Pedido #{order.orderNumber}</h2><span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700"><PackageCheck size={14} />{order.status}</span></div><p className="mt-1 text-sm text-gray-600">{order.items.map((item) => `${item.quantity} ${item.name}`).join(', ')}</p><p className="mt-2 inline-flex items-center gap-1 text-xs text-gray-400"><Clock3 size={13} />{formatDate(order.createdAt)}</p></div>
           <strong className="text-base sm:text-right">{formatPrice(Number(order.total))}</strong>
         </article>)}
       </div>

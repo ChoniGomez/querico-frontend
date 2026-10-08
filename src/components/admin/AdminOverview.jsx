@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock3 } from 'lucide-react';
+import { Clock3, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useShop } from '../../context/ShopContext.jsx';
 import { formatPrice } from '../../data/products.js';
@@ -11,6 +11,7 @@ function AdminOverview() {
   const [orders, setOrders] = useState([]);
   const [ordersError, setOrdersError] = useState('');
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [orderSearch, setOrderSearch] = useState('');
 
   useEffect(() => {
     apiRequest('/api/orders/all', { token: user.token })
@@ -33,6 +34,8 @@ function AdminOverview() {
       setOrdersError(error.message);
     }
   };
+
+  const filteredOrders = orders.filter((order) => String(order.orderNumber || '').includes(orderSearch.trim().replace(/^#/, '')));
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -63,15 +66,21 @@ function AdminOverview() {
         {loadingOrders && <p className="py-4 text-sm text-gray-500">Cargando pedidos...</p>}
         {ordersError && <p role="alert" className="py-4 text-sm font-semibold text-brand-red">{ordersError}</p>}
         {!loadingOrders && !ordersError && orders.length === 0 && <p className="py-4 text-sm text-gray-500">Todavía no hay pedidos registrados.</p>}
+        {orders.length > 0 && <label className="relative mb-4 block max-w-sm">
+          <Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <span className="sr-only">Buscar por número de pedido</span>
+          <input className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/15" inputMode="numeric" type="search" placeholder="Buscar pedido #1001" value={orderSearch} onChange={(event) => setOrderSearch(event.target.value.replace(/[^\d#]/g, ''))} />
+        </label>}
         <div className="divide-y divide-gray-200 border-y border-gray-200">
-          {orders.map((order) => <article className="flex flex-wrap items-center justify-between gap-4 py-4" key={order.id}>
+          {filteredOrders.map((order) => <article className="flex flex-wrap items-center justify-between gap-4 py-4" key={order.id}>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">#{order.id} · {order.customerName}</h3><span className="text-xs text-gray-500">{order.customerEmail || 'Pedido de invitado'}</span></div>
+              <div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">#{order.orderNumber} · {order.customerName}</h3><span className="text-xs text-gray-500">{order.customerEmail || 'Pedido de invitado'}</span></div>
               <p className="mt-1 text-sm text-gray-600">{order.items.map((item) => `${item.quantity} ${item.name}`).join(', ')}</p>
               <p className="mt-1 inline-flex items-center gap-1 text-xs text-gray-400"><Clock3 size={12} />{new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(order.createdAt))}</p>
             </div>
             <div className="flex items-center gap-3"><strong className="text-sm">{formatPrice(Number(order.total))}</strong><label className="sr-only" htmlFor={`order-status-${order.id}`}>Estado del pedido {order.id}</label><select id={`order-status-${order.id}`} className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-xs font-bold" value={order.status} onChange={(event) => updateOrderStatus(order.id, event.target.value)}><option>Pendiente</option><option>En preparación</option><option>Entregado</option></select></div>
           </article>)}
+          {orders.length > 0 && filteredOrders.length === 0 && <p className="py-6 text-center text-sm text-gray-500">No hay pedidos con ese número.</p>}
         </div>
       </section>
     </div>

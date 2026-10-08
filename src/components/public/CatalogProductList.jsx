@@ -3,6 +3,9 @@ import { categories as defaultCategories, formatPrice } from '../../data/product
 
 function CatalogProductList({ products, categories = defaultCategories, onAdd }) {
   const visibleProducts = products.filter((product) => product.visible !== false);
+  const formatDateTime = (value) => new Intl.DateTimeFormat('es-AR', {
+    dateStyle: 'medium', timeStyle: 'short',
+  }).format(new Date(value));
 
   return (
     <div className="space-y-10">
@@ -29,11 +32,19 @@ function CatalogProductList({ products, categories = defaultCategories, onAdd })
                     <div>
                       <h3 className="font-display text-lg font-extrabold text-brand-ink">{product.name}</h3>
                       <p className="mt-1 text-sm leading-5 text-gray-600">{product.description}</p>
+                      {(product.endDateTime || product.stock !== null || product.availabilityStatus !== 'available') && <div className="mt-2 flex flex-wrap gap-1.5">
+                        {product.availabilityStatus === 'scheduled' && <span className="rounded-md bg-amber-50 px-2 py-1 text-xs font-bold text-amber-900">Disponible desde {formatDateTime(product.startDateTime)}</span>}
+                        {product.availabilityStatus === 'expired' && <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-bold text-gray-700">Promoción finalizada</span>}
+                        {product.availabilityStatus === 'sold_out' && <span className="rounded-md bg-red-50 px-2 py-1 text-xs font-bold text-red-800">Agotado</span>}
+                        {product.availabilityStatus === 'available' && product.endDateTime && <span className="rounded-md bg-green-50 px-2 py-1 text-xs font-bold text-green-900">Disponible hasta {formatDateTime(product.endDateTime)}</span>}
+                        {product.availabilityStatus === 'available' && product.stock !== null && <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-bold text-gray-700">{product.stock > 0 ? `Quedan ${product.stock} · hasta agotar stock` : 'Agotado'}</span>}
+                      </div>}
+                      {product.promoMinQuantity && product.promoDiscountPercent && <p className="mt-2 inline-flex rounded-md bg-brand-red/10 px-2 py-1 text-xs font-extrabold text-brand-red">{product.promoMinQuantity}+ unidades · {product.promoDiscountPercent}% OFF</p>}
                     </div>
                     <div className="mt-4 flex items-center justify-between gap-2">
                       <strong className="font-display text-lg font-extrabold">{formatPrice(product.price)}</strong>
-                      <button type="button" className="inline-flex items-center gap-1.5 rounded-xl bg-brand-red px-3 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-brand-red-dark" onClick={() => onAdd(product)} aria-label={`Agregar ${product.name}`}>
-                        <Plus size={16} strokeWidth={2.5} /> AGREGAR
+                      <button type="button" className="inline-flex items-center gap-1.5 rounded-xl bg-brand-red px-3 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-brand-red-dark disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600" disabled={product.isPurchasable === false} onClick={() => onAdd(product)} aria-label={`${product.isPurchasable === false ? 'No disponible' : 'Agregar'} ${product.name}`}>
+                        <Plus size={16} strokeWidth={2.5} /> {product.isPurchasable === false ? 'NO DISPONIBLE' : 'AGREGAR'}
                       </button>
                     </div>
                   </div>

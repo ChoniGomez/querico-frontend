@@ -1,12 +1,21 @@
 const WHATSAPP_PHONE = '5493764560631';
+import { calculateProductPricing } from './promotionPricing.js';
 
 export function generarEnlaceWhatsApp(carrito, cliente) {
   if (carrito.length === 0) return null;
 
-  const subtotal = carrito.reduce((total, item) => total + item.price * item.quantity, 0);
+  const originalSubtotal = carrito.reduce((total, item) => total + Number(item.price) * item.quantity, 0);
+  const subtotal = carrito.reduce((total, item) => {
+    const productQuantity = carrito.filter((line) => String(line.id) === String(item.id)).reduce((quantity, line) => quantity + line.quantity, 0);
+    return total + calculateProductPricing(item, item.quantity, productQuantity).total;
+  }, 0);
+  const savings = originalSubtotal - subtotal;
   const lines = carrito.map((item) => {
     const note = item.notes ? `\n   _Aclaración: ${item.notes}_` : '';
-    return `• ${item.quantity} x *${item.name}* — ${formatMoney(item.price * item.quantity)}${note}`;
+    const productQuantity = carrito.filter((line) => String(line.id) === String(item.id)).reduce((quantity, line) => quantity + line.quantity, 0);
+    const pricing = calculateProductPricing(item, item.quantity, productQuantity);
+    const discount = pricing.discountApplies ? `\n   _Promo ${pricing.discountPercent}%: ahorrás ${formatMoney(pricing.discountAmount)}_` : '';
+    return `• ${item.quantity} x *${item.name}* — ${formatMoney(pricing.total)}${discount}${note}`;
   });
   const delivery = cliente.deliveryType === 'delivery'
     ? `Delivery\nDirección: ${cliente.address}`
@@ -20,7 +29,9 @@ export function generarEnlaceWhatsApp(carrito, cliente) {
     '',
     ...lines,
     '',
-    `*Subtotal: ${formatMoney(subtotal)}*`,
+    `*Subtotal: ${formatMoney(originalSubtotal)}*`,
+    ...(savings > 0 ? [`*Descuento: -${formatMoney(savings)}*`] : []),
+    `*Total: ${formatMoney(subtotal)}*`,
     '',
     `*Entrega:* ${delivery}`,
     `*Pago:* ${payment}`,

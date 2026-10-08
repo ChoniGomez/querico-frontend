@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Check, Clock3, Crown, MailCheck, ReceiptText } from 'lucide-react';
+import { ArrowLeft, Check, Clock3, Crown, MailCheck, ReceiptText, ShoppingBag } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -8,6 +8,7 @@ function LoginPage() {
   const { signInWithGoogle, signInWithEmail, registerWithEmail, verifyEmail, resendVerification } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user: activeUser } = useAuth();
   const [mode, setMode] = useState('login');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -116,10 +117,13 @@ function LoginPage() {
         <p className="mt-2 max-w-sm text-sm leading-6 text-white/75">Entrá con Google y llevá el registro de tus compras y pedidos anteriores, rápido y sin vueltas.</p>
       </div>
       <div className="px-7 py-7 sm:px-10">
-        <div className="mb-6 grid gap-3 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3"><ReceiptText size={19} className="shrink-0 text-brand-red" /><span className="text-xs font-bold leading-5 text-gray-700">Historial detallado de compras</span></div>
-          <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3"><Clock3 size={19} className="shrink-0 text-brand-green-dark" /><span className="text-xs font-bold leading-5 text-gray-700">Repetí tus favoritos más rápido</span></div>
-        </div>
+        {activeUser && <>
+          <div className="mb-6 grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3"><ReceiptText size={19} className="shrink-0 text-brand-red" /><span className="text-xs font-bold leading-5 text-gray-700">Historial detallado de compras</span></div>
+            <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-3"><Clock3 size={19} className="shrink-0 text-brand-green-dark" /><span className="text-xs font-bold leading-5 text-gray-700">Repetí tus favoritos más rápido</span></div>
+          </div>
+          {activeUser.role === 'customer' && <Link className="mb-5 flex min-h-10 items-center justify-center gap-2 rounded-lg border border-gray-200 text-sm font-bold text-gray-700 hover:bg-gray-50" to="/mis-pedidos"><ShoppingBag size={16} /> Ver mis pedidos</Link>}
+        </>}
         <div className="mb-5 flex min-h-12 justify-center"><GoogleLogin onSuccess={loginWithGoogle} onError={() => setError('No se pudo iniciar sesión con Google. Intentá nuevamente.')} /></div>
         <div className="mb-5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-gray-400"><span className="h-px flex-1 bg-gray-200" />O CON TU CORREO<span className="h-px flex-1 bg-gray-200" /></div>
 

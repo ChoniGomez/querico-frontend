@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Minus, Plus, Trash2, X } from 'lucide-react';
 import { formatPrice } from '../data/products.js';
+import { calculateProductPricing } from '../utils/promotionPricing.js';
 
 function CheckoutModal({ cart, subtotal, initialName, user, onUpdateProfile, isOpen, onClose, onChangeQuantity, onSubmit }) {
   const [deliveryType, setDeliveryType] = useState('delivery');
@@ -88,16 +89,19 @@ function CheckoutModal({ cart, subtotal, initialName, user, onUpdateProfile, isO
             </label>
             <label className="border-t border-gray-100 py-4 text-sm font-bold md:col-span-2" htmlFor="checkout-email">Correo electrónico
               <input className="mt-1.5 block h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-normal outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 read-only:text-gray-500" id="checkout-email" type="email" autoComplete="email" required readOnly={Boolean(user)} value={email} onChange={(event) => setEmail(event.target.value)} />
-              {user && <span className="mt-1 block text-xs font-normal text-gray-400">Verificado por Google</span>}
+              {user && <span className="mt-1 block text-xs font-semibold text-gray-700">{user.authProvider === 'google' || (!user.authProvider && user.isVerified) ? 'Verificado por Google' : 'Correo verificado'}</span>}
             </label>
             <section className="border-t border-gray-100 py-4 md:col-span-2">
               <div className="mb-2 flex items-center justify-between"><h3 className="font-display font-extrabold">Tu pedido</h3><span className="text-xs text-gray-500">{cart.reduce((count, item) => count + item.quantity, 0)} productos</span></div>
-              {cart.length === 0 ? <p className="text-sm text-gray-500">Tu pedido está vacío.</p> : cart.map((item) => (
+              {cart.length === 0 ? <p className="text-sm text-gray-500">Tu pedido está vacío.</p> : cart.map((item) => {
+                const productQuantity = cart.filter((line) => String(line.id) === String(item.id)).reduce((quantity, line) => quantity + line.quantity, 0);
+                const pricing = calculateProductPricing(item, item.quantity, productQuantity);
+                return (
                 <div className="flex items-center justify-between gap-3 border-b border-gray-100 py-3" key={item.lineId}>
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <strong className="text-sm font-extrabold">{item.name}</strong>
                     {item.notes && <span className="truncate text-xs italic text-brand-green-dark">{item.notes}</span>}
-                    <span className="text-xs text-gray-500">{formatPrice(item.price)} c/u</span>
+                    {pricing.discountApplies ? <><span className="text-xs text-gray-500 line-through">{formatPrice(pricing.baseUnitPrice)} c/u</span><span className="text-xs font-bold text-green-800">{formatPrice(pricing.unitPrice)} c/u · Promo {pricing.discountPercent}%</span></> : <span className="text-xs text-gray-700">{formatPrice(pricing.unitPrice)} c/u</span>}
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <div className="flex items-center gap-2">
@@ -105,10 +109,10 @@ function CheckoutModal({ cart, subtotal, initialName, user, onUpdateProfile, isO
                       <strong className="min-w-3 text-center text-sm">{item.quantity}</strong>
                       <button className="grid h-8 w-8 place-items-center rounded-full border border-gray-200 text-gray-600 hover:border-brand-green hover:text-brand-green-dark" type="button" aria-label={`Sumar ${item.name}`} onClick={() => changeQuantity(item.lineId, 1)}><Plus size={14} /></button>
                     </div>
-                    <b className="min-w-20 text-right text-sm">{formatPrice(item.price * item.quantity)}</b>
+                    <b className="min-w-20 text-right text-sm">{formatPrice(pricing.total)}</b>
                   </div>
                 </div>
-              ))}
+              );})}
               <div className="flex justify-between pt-3 font-display font-extrabold"><strong>Subtotal</strong><strong>{formatPrice(subtotal)}</strong></div>
             </section>
 
@@ -154,7 +158,7 @@ function CheckoutModal({ cart, subtotal, initialName, user, onUpdateProfile, isO
           <button className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-green-dark px-4 text-center text-sm font-extrabold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50" type="submit" disabled={cart.length === 0 || !isOpen || submitting}>
             <span aria-hidden="true">◔</span> {submitting ? 'GUARDANDO PEDIDO...' : 'CONFIRMAR Y ENVIAR A WHATSAPP'}
           </button>
-          <p className="mt-2 text-center text-[11px] text-gray-500">Al confirmar, se abrirá WhatsApp con el detalle listo para enviar.</p>
+          <p className="mt-2 text-center text-[11px] text-gray-700">Al confirmar, se abrirá WhatsApp con el detalle listo para enviar.</p>
         </form>
       </section>
     </div>
