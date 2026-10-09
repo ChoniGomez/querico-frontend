@@ -14,6 +14,7 @@ function ProductsManager() {
   const setProductsRef = useRef(setProducts);
   setProductsRef.current = setProducts;
   const { user } = useAuth();
+  const [categoryOptions, setCategoryOptions] = useState(categories);
   const [form, setForm] = useState(emptyProduct);
   const [editingId, setEditingId] = useState(null);
   const [imageError, setImageError] = useState('');
@@ -23,6 +24,14 @@ function ProductsManager() {
     apiRequest('/api/products/manage', { token: user.token })
       .then((manageableProducts) => setProductsRef.current(manageableProducts))
       .catch((error) => setVisibilityError(error.message));
+
+    apiRequest('/api/categories?all=true', { token: user.token })
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCategoryOptions(data.map((c) => ({ id: c.id, label: c.name })));
+        }
+      })
+      .catch(() => {});
   }, [user.token]);
 
   const changeVisibility = async (product, visible) => {
@@ -75,7 +84,7 @@ function ProductsManager() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-xs font-bold text-gray-600">Nombre<input required className="mt-1 block h-10 w-full rounded-lg border border-gray-300 px-3 text-sm font-normal text-gray-900" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
           <label className="text-xs font-bold text-gray-600">Precio<input required min="0" type="number" className="mt-1 block h-10 w-full rounded-lg border border-gray-300 px-3 text-sm font-normal text-gray-900" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} /></label>
-          <label className="text-xs font-bold text-gray-600">Categoría<select className="mt-1 block h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-normal text-gray-900" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>{categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></label>
+          <label className="text-xs font-bold text-gray-600">Categoría<select className="mt-1 block h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-normal text-gray-900" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>{categoryOptions.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></label>
           <label className="text-xs font-bold text-gray-600">Etiqueta<input className="mt-1 block h-10 w-full rounded-lg border border-gray-300 px-3 text-sm font-normal text-gray-900" placeholder="PROMO (opcional)" value={form.badge} onChange={(event) => setForm({ ...form, badge: event.target.value })} /></label>
           <label className="text-xs font-bold text-gray-600 sm:col-span-2">Descripción<input required className="mt-1 block h-10 w-full rounded-lg border border-gray-300 px-3 text-sm font-normal text-gray-900" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
           <div className="sm:col-span-2">
@@ -94,7 +103,7 @@ function ProductsManager() {
       <div className="overflow-x-auto">
         {visibilityError && <p role="alert" className="mb-3 text-sm font-semibold text-brand-red">{visibilityError}</p>}
         <table className="w-full min-w-[780px] border-collapse text-left text-sm"><thead><tr className="border-b border-gray-300 text-xs uppercase tracking-wide text-gray-500"><th className="py-3 pr-4">Producto</th><th className="py-3 pr-4">Categoría</th><th className="py-3 pr-4">Precio</th><th className="py-3 pr-4">Visibilidad</th><th className="py-3 text-right">Acciones</th></tr></thead>
-          <tbody>{products.map((product) => <tr className="border-b border-gray-200" key={product.id}><td className="py-3 pr-4"><div className="flex items-center gap-3"><img className="h-11 w-12 rounded-md bg-gray-100 object-cover" src={product.image} alt="" /><div><p className="font-bold">{product.name}</p><p className="mt-0.5 max-w-lg truncate text-xs text-gray-500">{product.description}</p></div></div></td><td className="py-3 pr-4 text-gray-600">{categories.find((category) => category.id === product.category)?.label || product.categoryName || product.category}</td><td className="py-3 pr-4 font-bold">{formatPrice(Number(product.price))}</td><td className="py-3 pr-4"><VisibilitySwitch label={`${product.visible === false ? 'Mostrar' : 'Ocultar'} ${product.name}`} checked={product.visible !== false} onChange={(visible) => changeVisibility(product, visible)} /></td><td className="py-3"><div className="flex justify-end gap-2"><button className="rounded-lg p-2 text-gray-600 hover:bg-gray-200" type="button" aria-label={`Editar ${product.name}`} onClick={() => editProduct(product)}><Pencil size={16} /></button><button className="rounded-lg p-2 text-brand-red hover:bg-red-50" type="button" aria-label={`Eliminar ${product.name}`} onClick={() => { setProducts(products.filter((item) => item.id !== product.id)); if (editingId === product.id) { setEditingId(null); setForm(emptyProduct); } }}><Trash2 size={16} /></button></div></td></tr>)}</tbody>
+          <tbody>{products.map((product) => <tr className="border-b border-gray-200" key={product.id}><td className="py-3 pr-4"><div className="flex items-center gap-3"><img className="h-11 w-12 rounded-md bg-gray-100 object-cover" src={product.image} alt="" /><div><p className="font-bold">{product.name}</p><p className="mt-0.5 max-w-lg truncate text-xs text-gray-500">{product.description}</p></div></div></td><td className="py-3 pr-4 text-gray-600">{categoryOptions.find((category) => category.id === product.category)?.label || product.categoryName || product.category}</td><td className="py-3 pr-4 font-bold">{formatPrice(Number(product.price))}</td><td className="py-3 pr-4"><VisibilitySwitch label={`${product.visible === false ? 'Mostrar' : 'Ocultar'} ${product.name}`} checked={product.visible !== false} onChange={(visible) => changeVisibility(product, visible)} /></td><td className="py-3"><div className="flex justify-end gap-2"><button className="rounded-lg p-2 text-gray-600 hover:bg-gray-200" type="button" aria-label={`Editar ${product.name}`} onClick={() => editProduct(product)}><Pencil size={16} /></button><button className="rounded-lg p-2 text-brand-red hover:bg-red-50" type="button" aria-label={`Eliminar ${product.name}`} onClick={() => { setProducts(products.filter((item) => item.id !== product.id)); if (editingId === product.id) { setEditingId(null); setForm(emptyProduct); } }}><Trash2 size={16} /></button></div></td></tr>)}</tbody>
         </table>
         {products.length === 0 && <p className="py-8 text-center text-sm text-gray-500">Todavía no hay productos en el catálogo.</p>}
       </div>
