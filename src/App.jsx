@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AdminLayout from './components/admin/AdminLayout.jsx';
 import AdminOverview from './components/admin/AdminOverview.jsx';
+import SalesManager from './components/admin/SalesManager.jsx';
 import ProductsManager from './components/admin/ProductsManager.jsx';
 import CategoriesManager from './components/admin/CategoriesManager.jsx';
 import PromotionsManager from './components/admin/PromotionsManager.jsx';
@@ -19,6 +20,7 @@ function App() {
     <Route element={<ProtectedRoute role="admin" />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminOverview />} />
+        <Route path="ventas" element={<SalesManager />} />
         <Route path="categorias" element={<CategoriesManager />} />
         <Route path="productos" element={<ProductsManager />} />
         <Route path="promociones" element={<PromotionsManager />} />

@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImagePlus, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { categories, formatPrice } from '../../data/products.js';
 import { useShop } from '../../context/ShopContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { apiRequest } from '../../utils/api.js';
 import { readImageFile } from '../../utils/readImageFile.js';
 import VisibilitySwitch from './VisibilitySwitch.jsx';
 
@@ -9,9 +11,33 @@ const emptyProduct = { name: '', description: '', category: categories[0].id, pr
 
 function ProductsManager() {
   const { products, setProducts } = useShop();
+  const setProductsRef = useRef(setProducts);
+  setProductsRef.current = setProducts;
+  const { user } = useAuth();
   const [form, setForm] = useState(emptyProduct);
   const [editingId, setEditingId] = useState(null);
   const [imageError, setImageError] = useState('');
+  const [visibilityError, setVisibilityError] = useState('');
+
+  useEffect(() => {
+    apiRequest('/api/products/manage', { token: user.token })
+      .then((manageableProducts) => setProductsRef.current(manageableProducts))
+      .catch((error) => setVisibilityError(error.message));
+  }, [user.token]);
+
+  const changeVisibility = async (product, visible) => {
+    setVisibilityError('');
+    try {
+      await apiRequest(`/api/products/${product.id}/visibility`, {
+        method: 'PATCH',
+        token: user.token,
+        body: JSON.stringify({ visible }),
+      });
+      setProducts((current) => current.map((item) => item.id === product.id ? { ...item, visible } : item));
+    } catch (error) {
+      setVisibilityError(error.message || 'No se pudo actualizar la visibilidad.');
+    }
+  };
 
   const saveProduct = (event) => {
     event.preventDefault();
@@ -66,8 +92,9 @@ function ProductsManager() {
         <button className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg bg-gray-950 px-4 text-sm font-bold text-white hover:bg-gray-800" type="submit">{editingId ? <Pencil size={15} /> : <Plus size={16} />}{editingId ? 'Guardar cambios' : 'Crear producto'}</button>
       </form>
       <div className="overflow-x-auto">
+        {visibilityError && <p role="alert" className="mb-3 text-sm font-semibold text-brand-red">{visibilityError}</p>}
         <table className="w-full min-w-[780px] border-collapse text-left text-sm"><thead><tr className="border-b border-gray-300 text-xs uppercase tracking-wide text-gray-500"><th className="py-3 pr-4">Producto</th><th className="py-3 pr-4">Categoría</th><th className="py-3 pr-4">Precio</th><th className="py-3 pr-4">Visibilidad</th><th className="py-3 text-right">Acciones</th></tr></thead>
-          <tbody>{products.map((product) => <tr className="border-b border-gray-200" key={product.id}><td className="py-3 pr-4"><div className="flex items-center gap-3"><img className="h-11 w-12 rounded-md bg-gray-100 object-cover" src={product.image} alt="" /><div><p className="font-bold">{product.name}</p><p className="mt-0.5 max-w-lg truncate text-xs text-gray-500">{product.description}</p></div></div></td><td className="py-3 pr-4 text-gray-600">{categories.find((category) => category.id === product.category)?.label || product.category}</td><td className="py-3 pr-4 font-bold">{formatPrice(product.price)}</td><td className="py-3 pr-4"><VisibilitySwitch label={`${product.visible === false ? 'Mostrar' : 'Ocultar'} ${product.name}`} checked={product.visible !== false} onChange={(visible) => setProducts(products.map((item) => item.id === product.id ? { ...item, visible } : item))} /></td><td className="py-3"><div className="flex justify-end gap-2"><button className="rounded-lg p-2 text-gray-600 hover:bg-gray-200" type="button" aria-label={`Editar ${product.name}`} onClick={() => editProduct(product)}><Pencil size={16} /></button><button className="rounded-lg p-2 text-brand-red hover:bg-red-50" type="button" aria-label={`Eliminar ${product.name}`} onClick={() => { setProducts(products.filter((item) => item.id !== product.id)); if (editingId === product.id) { setEditingId(null); setForm(emptyProduct); } }}><Trash2 size={16} /></button></div></td></tr>)}</tbody>
+          <tbody>{products.map((product) => <tr className="border-b border-gray-200" key={product.id}><td className="py-3 pr-4"><div className="flex items-center gap-3"><img className="h-11 w-12 rounded-md bg-gray-100 object-cover" src={product.image} alt="" /><div><p className="font-bold">{product.name}</p><p className="mt-0.5 max-w-lg truncate text-xs text-gray-500">{product.description}</p></div></div></td><td className="py-3 pr-4 text-gray-600">{categories.find((category) => category.id === product.category)?.label || product.categoryName || product.category}</td><td className="py-3 pr-4 font-bold">{formatPrice(Number(product.price))}</td><td className="py-3 pr-4"><VisibilitySwitch label={`${product.visible === false ? 'Mostrar' : 'Ocultar'} ${product.name}`} checked={product.visible !== false} onChange={(visible) => changeVisibility(product, visible)} /></td><td className="py-3"><div className="flex justify-end gap-2"><button className="rounded-lg p-2 text-gray-600 hover:bg-gray-200" type="button" aria-label={`Editar ${product.name}`} onClick={() => editProduct(product)}><Pencil size={16} /></button><button className="rounded-lg p-2 text-brand-red hover:bg-red-50" type="button" aria-label={`Eliminar ${product.name}`} onClick={() => { setProducts(products.filter((item) => item.id !== product.id)); if (editingId === product.id) { setEditingId(null); setForm(emptyProduct); } }}><Trash2 size={16} /></button></div></td></tr>)}</tbody>
         </table>
         {products.length === 0 && <p className="py-8 text-center text-sm text-gray-500">Todavía no hay productos en el catálogo.</p>}
       </div>
