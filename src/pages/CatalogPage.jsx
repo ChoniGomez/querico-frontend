@@ -19,20 +19,47 @@ function CatalogPage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [databaseCategories, setDatabaseCategories] = useState(null);
   const [databaseProducts, setDatabaseProducts] = useState(null);
+  const [databasePromotions, setDatabasePromotions] = useState(null);
   const [promotionError, setPromotionError] = useState('');
   const { user, updateProfile } = useAuth();
   const { isOpen, products, promotions } = useShop();
 
   useEffect(() => {
     let active = true;
-    Promise.all([apiRequest('/api/categories'), apiRequest('/api/products')])
-      .then(([categories, catalogProducts]) => {
+    Promise.all([
+      apiRequest('/api/categories'),
+      apiRequest('/api/products'),
+      apiRequest('/api/promotions').catch(() => null),
+    ])
+      .then(([categories, catalogProducts, apiPromos]) => {
         if (!active) return;
         setDatabaseCategories(categories.map((category) => ({
           id: category.id,
           label: category.name,
         })));
         setDatabaseProducts(catalogProducts);
+
+        if (Array.isArray(apiPromos) && apiPromos.length > 0) {
+          setDatabasePromotions(apiPromos);
+        } else if (Array.isArray(catalogProducts)) {
+          const derivedPromos = catalogProducts
+            .filter((p) => p.promoMinQuantity && p.promoDiscountPercent && p.isPurchasable !== false)
+            .map((p) => ({
+              id: `promo-${p.id}`,
+              productId: p.id,
+              name: p.name,
+              details: `${p.promoMinQuantity}+ unidades · ${p.promoDiscountPercent}% OFF`,
+              type: 'discount',
+              value: p.promoDiscountPercent,
+              minQuantity: p.promoMinQuantity,
+              discountPercent: p.promoDiscountPercent,
+              image: p.image,
+              visible: true,
+            }));
+          if (derivedPromos.length > 0) {
+            setDatabasePromotions(derivedPromos);
+          }
+        }
       })
       .catch(() => {});
     return () => { active = false; };
@@ -113,7 +140,7 @@ function CatalogPage() {
           </div>
         </section>
         {promotionError && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-brand-red" role="alert">{promotionError}</p>}
-        <PromotionList promotions={promotions} products={databaseProducts || products || starterProducts} onAddPromotion={addPromotionToCart} />
+        <PromotionList promotions={databasePromotions || promotions} products={databaseProducts || products || starterProducts} onAddPromotion={addPromotionToCart} />
         <CatalogProductList categories={databaseCategories || starterCategories} products={databaseProducts || products || starterProducts} onAdd={setSelectedProduct} />
         <footer className="mt-12 flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 py-6 text-xs font-semibold text-gray-500">
           <span>QUE RICO! <span className="text-brand-green-dark">BUEN SABOR, BUENOS MOMENTOS.</span></span><span>HECHO CON AMOR Y MUCHO QUESO</span>
