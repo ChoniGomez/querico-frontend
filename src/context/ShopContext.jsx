@@ -41,7 +41,12 @@ export function ShopProvider({ children }) {
     ...shop,
     setIsOpen: (isOpen) => updateShop({ isOpen }),
     setSchedule: (schedule) => updateShop({ schedule }),
-    setProducts: (products) => updateShop({ products }),
+    setProducts: (nextProducts) => {
+      const products = typeof nextProducts === 'function'
+        ? nextProducts(Array.isArray(shop.products) ? shop.products : initialProducts)
+        : nextProducts;
+      updateShop({ products: Array.isArray(products) ? products : initialProducts });
+    },
     setPromotions: (promotions) => updateShop({ promotions }),
   };
 

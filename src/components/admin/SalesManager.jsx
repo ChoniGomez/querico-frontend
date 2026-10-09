@@ -56,7 +56,7 @@ function SalesManager() {
           <p className="mt-1 text-sm text-gray-700">{order.items.map((item) => `${item.quantity} ${item.name}`).join(', ')}</p>
           <p className="mt-1 inline-flex items-center gap-1 text-xs text-gray-600"><Clock3 size={12} />{new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(order.createdAt))}</p>
         </div>
-        <div className="flex items-center gap-3"><strong className="text-sm">{formatPrice(Number(order.total))}</strong><label className="sr-only" htmlFor={`sales-order-status-${order.id}`}>Estado del pedido {order.orderNumber}</label><select id={`sales-order-status-${order.id}`} className="h-10 rounded-lg border border-gray-300 bg-white px-2 text-xs font-bold text-gray-900 disabled:opacity-50" disabled={updatingId === order.id} value={order.status} onChange={(event) => updateOrderStatus(order.id, event.target.value)}><option>Pendiente</option><option>En preparación</option><option>Entregado</option></select></div>
+        <div className="flex items-center gap-3"><strong className="text-sm">{formatPrice(Number(order.total))}</strong><label className="sr-only" htmlFor={`sales-order-status-${order.id}`}>Estado del pedido {order.orderNumber}</label><select id={`sales-order-status-${order.id}`} className="h-10 rounded-lg border border-gray-300 bg-white px-2 text-xs font-bold text-gray-900 disabled:opacity-50" disabled={updatingId === order.id} value={order.status} onChange={(event) => updateOrderStatus(order.id, event.target.value)}><option>Pendiente</option><option>En preparación</option><option>Entregado</option><option>Cancelado</option></select></div>
       </article>)}
     </div>}
   </div>;
