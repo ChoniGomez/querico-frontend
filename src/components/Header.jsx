@@ -37,10 +37,23 @@ function Header({ categories = defaultCategories }) {
   return (
     <header ref={headerRef} className="relative z-40 bg-brand-green text-white shadow-sm">
       <div className="mx-auto flex min-h-[76px] max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link className="flex items-center gap-3" to="/" aria-label="Que Rico!, inicio">
-          {!logoFailed && <img className="h-12 w-12 rounded-xl bg-white object-contain p-1" src={logo} alt="Logo Que Rico!" onError={() => setLogoFailed(true)} />}
-          {logoFailed && <span className="grid h-12 w-12 place-items-center rounded-xl bg-white text-xl font-black text-brand-green">QR!</span>}
-          <span className="font-display text-xl font-extrabold leading-none sm:text-2xl">Que Rico!</span>
+        <Link className="group flex items-center gap-3 transition-opacity hover:opacity-95" to="/" aria-label="Que Rico!, inicio">
+          {!logoFailed && (
+            <img
+              className="h-11 w-11 object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-105 sm:h-12 sm:w-12"
+              src={logo}
+              alt="Logo Que Rico!"
+              onError={() => setLogoFailed(true)}
+            />
+          )}
+          {logoFailed && (
+            <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-white/80 text-base font-black tracking-wider text-white sm:h-11 sm:w-11">
+              QR!
+            </span>
+          )}
+          <span className="font-display text-xl font-extrabold leading-none tracking-tight sm:text-2xl">
+            Que Rico!
+          </span>
         </Link>
         <div className="flex items-center gap-3 sm:gap-6">
           <span className="hidden items-center gap-1.5 text-sm font-semibold sm:inline-flex"><MapPin size={16} /> Atención todos los días</span>
